@@ -210,13 +210,12 @@ def add_symbols(rdkit_mol):
     for atom in rdkit_mol.GetAtoms():
         atom.SetProp("symbol", atom.GetSymbol())
 
-def rdkit2cauldronoid(rdkit_mol, name):
-    EmbedMolecule(rdkit_mol)
+def rdkit2cauldronoid(rdkit_mol):
     add_default_props(rdkit_mol)
-    add_positions(rdkit_mol)
+    if rdkit_mol.GetNumConformers() > 0:
+        add_positions(rdkit_mol)
     add_symbols(rdkit_mol)
-    rdkit_mol.SetProp("mol_id", "rdkit_mol")
-    cauldronoid_mol = CauldronoidMolecule(name = name, molecule_table = molecule_table(rdkit_mol), one_atom_table = atom_table(rdkit_mol), two_atom_table = bond_table(rdkit_mol)) 
+    cauldronoid_mol = CauldronoidMolecule(molecule_table = molecule_table(rdkit_mol), one_atom_table = atom_table(rdkit_mol), two_atom_table = bond_table(rdkit_mol)) 
     return cauldronoid_mol
 
 def add_default_props(mol):
