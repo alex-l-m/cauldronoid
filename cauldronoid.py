@@ -6,7 +6,11 @@ try:
     has_torch = True
 except ImportError:
     has_torch = False
-import ase
+try:
+    import ase
+    has_ase = True
+except ImportError:
+    has_ase = False
 
 # Semantically special column names
 default_names = frozenset([\
@@ -195,6 +199,8 @@ class Molecule:
         return tables2data(self.name, self.molecule_table, self.one_atom_table, self.two_atom_table)
     def get_ase(self):
         '''Returns an Atomic Simulation Environment Atoms object'''
+        if not has_ase:
+            raise ImportError("Atomic simulation environment Python library required to return ase objects")
         return ase.Atoms(self.get_element_symbols(), self.get_positions())
     def get_pymatgen(self):
         '''Returns a Pymatgen Molecule object'''
