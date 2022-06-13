@@ -140,7 +140,7 @@ symbols2numbers = {\
         "Ts": 117,
         "Og": 118}
 
-class CauldronoidMolecule:
+class Molecule:
     def __init__(self, name = None, molecule_table = None, one_atom_table = None,
                  two_atom_table = None, special_colnames = None):
         self.special_colnames = dict((i, i) for i in default_names)
