@@ -220,14 +220,8 @@ def rdkit2cauldronoid(rdkit_mol):
 
 def add_default_props(mol):
     for i, atom in enumerate(mol.GetAtoms()):
-        for prop_name, prop_value in atom.GetPropsAsDict(\
-				includePrivate = False, includeComputed = False).items():
-            atom.ClearProp(prop_name)
         atom.SetProp("atom_id", str(i))
     for i, bond in enumerate(mol.GetBonds()):
-        for prop_name, prop_value in bond.GetPropsAsDict(\
-				includePrivate = False, includeComputed = False).items():
-            bond.ClearProp(prop_name)
         bond.SetProp("bond_id", str(i))
         bond.SetProp("start_atom", str(bond.GetBeginAtomIdx()))
         bond.SetProp("end_atom", str(bond.GetEndAtomIdx()))
