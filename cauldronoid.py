@@ -146,15 +146,18 @@ symbols2numbers = {\
 
 class Molecule:
     def __init__(self, name = None, molecule_table = None, one_atom_table = None,
-                 two_atom_table = None, special_colnames = None):
-        self.special_colnames = dict((i, i) for i in default_names)
-        if special_colnames is not None:
-            # Add or replace special column names according to the special_colnames argument
-            self.special_colnames.update(special_colnames)
-            # I want there to be a way to remove special column names, so if they're given as None, remove them
-            to_remove = [key for key, value in self.special_colnames.items() if value is None]
+                 two_atom_table = None, colnames = None):
+        self.colnames = dict((i, i) for i in default_names)
+        if colnames is not None:
+            # Add or replace special column names according to the colnames argument
+            self.colnames.update(colnames)
+            # I want there to be a way to remove special column names, so if
+            # they're given as None, remove them
+            to_remove = [key \
+                    for key, value in self.colnames.items() \
+                    if value is None]
             for key in to_remove:
-                del x[key]
+                del self.colnames[key]
         if molecule_table is not None:
             # This represents ONE molecule!
             assert molecule_table.shape[0] == 1
@@ -164,15 +167,14 @@ class Molecule:
         # Get the name from the name argument, or, if not available, from the molecule table
         if name is not None:
             self.name = name
-        elif molecule_table is not None and self.special_colnames["mol_id"] in molecule_table.columns:
-            self.name = molecule_table[self.special_colnames["mol_id"]][0]
+        elif molecule_table is not None and \
+                self.colnames["mol_id"] in molecule_table.columns:
+            self.name = molecule_table[self.colnames["mol_id"]][0]
         else:
             self.name = None
         self.one_atom_table = one_atom_table
         # TO DO: If they're bonded check if it's a connected component?
         self.two_atom_table = two_atom_table
-    def get_name(self):
-        return self.name
     # Retrieving the tables
     def get_molecule_table(self):
         return self.molecule_table
@@ -185,10 +187,10 @@ class Molecule:
         return self.name
     def get_positions(self):
         return self.one_atom_table\
-                [[self.special_colnames["x"], self.special_colnames["y"], self.special_colnames["z"]]].\
+                [[self.colnames["x"], self.colnames["y"], self.colnames["z"]]].\
                 to_numpy()
     def get_element_symbols(self):
-        return self.one_atom_table[self.special_colnames["symbol"]].to_list()
+        return self.one_atom_table[self.colnames["symbol"]].to_list()
     def get_atomic_numbers(self):
         return [symbols2numbers[symbol] for symbol in self.get_element_symbols()]
     def get_rdkit(self):
@@ -233,21 +235,21 @@ def add_default_props(mol):
         bond.SetProp("end_atom", str(bond.GetEndAtomIdx()))
 
 def bind_rows_map(table_fun, name_fun, id_colname, xs):
-	'''Apply a function to many objects, generating a table from each, and join
-	these into a single table with a new column identifying the object. Inspired by
-	Haskell's concatMap and dplyr's bind_rows.
-	
-	table_fun: Function mapping objects to tables (iterable of Pandas dataframes)
-	name_fun: Function mapping objects to names (iterable of strings)
-	id_colname: Name of new column to add containing the name of the object that the row comes from (string)
-	xs: Objects to generate tables from
-	
-	Returns a Pandas dataframe'''
-	names = map(name_fun, xs)
-	tables = map(table_fun, xs)
-	return concat(tables, axis = 0, keys = names).\
-			reset_index(level = 0).\
-			rename(columns = {"level_0": id_colname})
+    '''Apply a function to many objects, generating a table from each, and join
+    these into a single table with a new column identifying the object. Inspired by
+    Haskell's concatMap and dplyr's bind_rows.
+    
+    table_fun: Function mapping objects to tables (iterable of Pandas dataframes)
+    name_fun: Function mapping objects to names (iterable of strings)
+    id_colname: Name of new column to add containing the name of the object that the row comes from (string)
+    xs: Objects to generate tables from
+    
+    Returns a Pandas dataframe'''
+    names = map(name_fun, xs)
+    tables = map(table_fun, xs)
+    return concat(tables, axis = 0, keys = names).\
+    		reset_index(level = 0).\
+    		rename(columns = {"level_0": id_colname})
 	
 def molecule_table(rdkit_mol):
     return DataFrame([rdkit_mol.GetPropsAsDict(\
