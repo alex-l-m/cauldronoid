@@ -223,7 +223,11 @@ def rdkit2cauldronoid(rdkit_mol):
     if rdkit_mol.GetNumConformers() > 0:
         add_positions(rdkit_mol)
     add_symbols(rdkit_mol)
-    cauldronoid_mol = Molecule(molecule_table = molecule_table(rdkit_mol), one_atom_table = atom_table(rdkit_mol), two_atom_table = bond_table(rdkit_mol)) 
+    if rdkit_mol.HasProp("_Name") and rdkit_mol.GetProp("_Name") != "":
+        name = rdkit_mol.GetProp("_Name")
+    else:
+        name = None
+    cauldronoid_mol = Molecule(name = name, molecule_table = molecule_table(rdkit_mol), one_atom_table = atom_table(rdkit_mol), two_atom_table = bond_table(rdkit_mol)) 
     return cauldronoid_mol
 
 def add_default_props(mol):
