@@ -11,6 +11,11 @@ try:
     has_ase = True
 except ImportError:
     has_ase = False
+try:
+    import indigox as ix
+    has_indigo = True
+except ImportError:
+    has_indigo = False
 
 # Semantically special column names
 default_names = frozenset([\
@@ -207,6 +212,26 @@ class Molecule:
     def get_pymatgen(self):
         '''Returns a Pymatgen Molecule object'''
         pass
+    def get_indigo(self):
+        '''Returns an Indigo Molecule object for bond order estimation'''
+        if not has_indigo:
+            raise ImportError("Cannot convert to Indigo molecule because Indigo Python library not installed")
+        element_list = self.get_element_symbols()
+        bond_table = self.get_two_atom_table()[[self.special_colnames["start_atom"], self.special_colnames["end_atom"]]]
+        bond_pairs = [(row["start_atom"], row["end_atom"]) for i, row in bond_table.iterrows()]
+        
+        # Make the Indigo molecule
+        mol_indigo = ix.Molecule()
+        mol_indigo.SetTotalCharge(0)
+        atoms = []
+        for i, element in enumerate(element_list):
+            atom = mol_indigo.NewAtom(ix.PeriodicTable()[element])
+            # The atoms have to contain their index in the name or my code for converting back to RDKit won't work
+            atom.SetName(element + str(i))
+            atoms.append(atom)
+        for start_atom_idx, end_atom_idx in bond_pairs:
+            mol_indigo.NewBond(atoms[start_atom_idx], atoms[end_atom_idx])
+        return mol_indigo
 
 def add_positions(rdkit_mol, conf_id = 0):
     for pos_vec, atom in zip(list(rdkit_mol.GetConformer(conf_id).GetPositions()), rdkit_mol.GetAtoms()):
