@@ -174,7 +174,10 @@ class Molecule:
             self.name = name
         elif molecule_table is not None and \
                 self.special_colnames["mol_id"] in molecule_table.columns:
-            self.name = molecule_table[self.special_colnames["mol_id"]][0]
+            # mol_id column: pandas Series object
+            mol_id_col = molecule_table[self.special_colnames["mol_id"]]
+            # Retrieve the first value
+            self.name = mol_id_col.item()
         else:
             self.name = None
         self.one_atom_table = one_atom_table
