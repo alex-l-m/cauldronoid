@@ -1,4 +1,6 @@
 from pandas import DataFrame, concat
+from rdkit.Chem.rdmolops import SanitizeMol, RemoveHs
+from rdkit.Chem.rdchem import BondType, Atom, Mol, EditableMol
 # Optional imports, so I can run this on my computer where I don't have pytorch
 try:
     import torch as t
@@ -27,7 +29,9 @@ default_names = frozenset([\
         "z",
         "bond_id",
         "start_atom",
-        "end_atom"])
+        "end_atom",
+        "formal_charge",
+        "bond_order"])
 # Periodic table
 symbols2numbers = {\
         "H": 1,
@@ -201,9 +205,58 @@ class Molecule:
         return self.one_atom_table[self.special_colnames["symbol"]].to_list()
     def get_atomic_numbers(self):
         return [symbols2numbers[symbol] for symbol in self.get_element_symbols()]
-    def get_rdkit(self):
+    def get_rdkit(self, sanitize = True, removeHs = True):
         '''Return an rdkit molecule'''
-        pass
+        mol_reconstructed_editable = EditableMol(Mol())
+
+        atom_id_col = self.special_colnames["atom_id"]
+        symbol_col = self.special_colnames["symbol"]
+        formal_charge_col = self.special_colnames["formal_charge"]
+        # Indices of atoms will be needed to add bonds
+        atom_indices = dict()
+        for i, (key, row) in enumerate(self.get_one_atom_table().iterrows()):
+            # Need type conversion because I don't know how to control pandas
+            # types and it may infer a floating point type for the column
+            element = str(row[symbol_col])
+            atom_id = str(row[atom_id_col])
+            formal_charge = int(row[formal_charge_col])
+            new_rdkit_atom = Atom(element)
+            new_rdkit_atom.SetFormalCharge(formal_charge)
+            new_rdkit_atom.SetProp("_Name", atom_id)
+            atom_indices[atom_id] = i
+            mol_reconstructed_editable.AddAtom(new_rdkit_atom)
+        
+        bond_id_col = self.special_colnames["bond_id"]
+        start_atom_col = self.special_colnames["start_atom"]
+        end_atom_col = self.special_colnames["end_atom"]
+        bond_order_col = self.special_colnames["bond_order"]
+        for key, row in self.get_two_atom_table().iterrows():
+            bond_id = str(row[bond_id_col])
+            start_atom = str(row[start_atom_col])
+            end_atom = str(row[end_atom_col])
+            order_string = str(row[bond_order_col])
+            assert order_string != "UNSPECIFIED"
+            order_rdkit = BondType.names[order_string]
+            # Relies on the atoms containing their index in the name
+            start_atom_index = atom_indices[start_atom]
+            end_atom_index = atom_indices[end_atom]
+            # I don't see a way to actually add the bond ID
+            # Maybe it's not important
+            mol_reconstructed_editable.AddBond(start_atom_index, end_atom_index, order_rdkit)
+        mol_reconstructed = mol_reconstructed_editable.GetMol()
+        mol_reconstructed.SetProp("_Name", self.get_name())
+
+        # Maybe sanitize
+        if sanitize:
+            SanitizeMol(mol_reconstructed)
+
+        # Maybe remove hydrogens
+        if removeHs:
+            outmol = RemoveHs(mol_reconstructed)
+        else:
+            outmol = mol_reconstructed
+
+        return outmol
     def get_torchgeom(self):
         '''Return a Pytorch geometric Data object'''
         return tables2data(self.name, self.molecule_table, self.one_atom_table, self.two_atom_table)
