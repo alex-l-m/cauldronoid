@@ -26,7 +26,7 @@ default_names = frozenset([\
         "start_atom",
         "end_atom",
         "formal_charge",
-        "bond_order"])
+        "bond_type"])
 # Periodic table
 symbols2numbers = {\
         "H": 1,
@@ -224,7 +224,7 @@ class Molecule:
         bond_id_col = self.special_colnames["bond_id"]
         start_atom_col = self.special_colnames["start_atom"]
         end_atom_col = self.special_colnames["end_atom"]
-        bond_order_col = self.special_colnames["bond_order"]
+        bond_order_col = self.special_colnames["bond_type"]
         for key, row in self.get_two_atom_table().iterrows():
             bond_id = str(row[bond_id_col])
             start_atom = str(row[start_atom_col])
@@ -294,7 +294,7 @@ def add_default_props(mol):
         bond.SetProp("bond_id", str(i))
         bond.SetProp("start_atom", str(bond.GetBeginAtomIdx()))
         bond.SetProp("end_atom", str(bond.GetEndAtomIdx()))
-        bond.SetProp("bond_order", bond.GetBondType().name)
+        bond.SetProp("bond_type", bond.GetBondType().name)
 
 def bind_rows_map(table_fun, name_fun, id_colname, xs):
     '''Apply a function to many objects, generating a table from each, and join
