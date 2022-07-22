@@ -289,10 +289,12 @@ def rdkit2cauldronoid(rdkit_mol):
 def add_default_props(mol):
     for i, atom in enumerate(mol.GetAtoms()):
         atom.SetProp("atom_id", str(i))
+        atom.SetProp("formal_charge", str(atom.GetFormalCharge()))
     for i, bond in enumerate(mol.GetBonds()):
         bond.SetProp("bond_id", str(i))
         bond.SetProp("start_atom", str(bond.GetBeginAtomIdx()))
         bond.SetProp("end_atom", str(bond.GetEndAtomIdx()))
+        bond.SetProp("bond_order", bond.GetBondType().name)
 
 def bind_rows_map(table_fun, name_fun, id_colname, xs):
     '''Apply a function to many objects, generating a table from each, and join
