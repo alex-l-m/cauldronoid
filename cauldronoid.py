@@ -363,3 +363,34 @@ def tables2data(mol_id, molecule_table = None, atom_table = None,
             # 2*b by j matrix of one-hot bond types
             output.edge_attr = t.tensor(bond_properties.to_numpy(), dtype = t.float32)
     return output
+
+def tables2mols(molecule_table, one_atom_table,
+        two_atom_table, special_colnames = None):
+    if special_colnames is None:
+        mol_id_colname = "mol_id"
+    else:
+        mol_id_colname = special_colnames["mol_id"]
+    mol_ids = set(molecule_table[mol_id_colname])
+    # Without "iter", I get:
+    # TypeError: 'str' object is not callable
+    # I'm not sure where this error happens
+    molecule_dict = dict(iter(molecule_table.groupby(mol_id_colname)))
+    one_atom_dict = dict(iter(one_atom_table.groupby(mol_id_colname)))
+    two_atom_dict = dict(iter(two_atom_table.groupby(mol_id_colname)))
+    return [Molecule(None,
+        molecule_dict[mol_id],
+        one_atom_dict[mol_id],
+        two_atom_dict[mol_id]) \
+                for mol_id in mol_ids]
+
+def mols2tables(mols):
+    # Get the molecule colname from the first molecule, assuming it's the same for all
+    mol_id_colname = mols[0].special_colnames["mol_id"]
+    assert all(mol.special_colnames["mol_id"] == mol_id_colname for mol in mols)
+    molecule_table = bind_rows_map(Molecule.get_molecule_table,
+            Molecule.get_name, mol_id_colname, mols)
+    one_atom_table = bind_rows_map(Molecule.get_one_atom_table,
+            Molecule.get_name, mol_id_colname, mols)
+    two_atom_table = bind_rows_map(Molecule.get_two_atom_table,
+            Molecule.get_name, mol_id_colname, mols)
+    return molecule_table, one_atom_table, two_atom_table
