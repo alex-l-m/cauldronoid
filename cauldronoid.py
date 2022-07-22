@@ -1,4 +1,5 @@
-from pandas import DataFrame, concat
+import os.path
+from pandas import DataFrame, concat, read_csv
 from rdkit.Chem.rdmolops import SanitizeMol, RemoveHs
 from rdkit.Chem.rdchem import BondType, Atom, Mol, EditableMol
 # Optional imports, so I can run this on my computer where I don't have pytorch
@@ -396,3 +397,35 @@ def mols2tables(mols):
     two_atom_table = bind_rows_map(Molecule.get_two_atom_table,
             Molecule.get_name, mol_id_colname, mols)
     return molecule_table, one_atom_table, two_atom_table
+
+def files2mols(directory = None, prefix = None, suffixes = ("_mol_tbl.csv.gz",
+    "_one_tbl.csv.gz", "_two_tbl.csv.gz"), molecule_table_path = None,
+    one_atom_table_path = None, two_atom_table_path = None):
+    if prefix is not None:
+        if directory is None:
+            # os.path.join won't add slashes if you give an empty string so this is safe
+            directory = ""
+        molecule_table_path = os.path.join(directory, prefix + suffixes[0])
+        one_atom_table_path = os.path.join(directory, prefix + suffixes[1])
+        two_atom_table_path = os.path.join(directory, prefix + suffixes[2])
+    molecule_table = read_csv(molecule_table_path)
+    one_atom_table = read_csv(one_atom_table_path)
+    two_atom_table = read_csv(two_atom_table_path)
+    return tables2mols(molecule_table, one_atom_table, two_atom_table)
+
+def mols2files(mols, directory = None, prefix = None, suffixes = ("_mol_tbl.csv.gz",
+    "_one_tbl.csv.gz", "_two_tbl.csv.gz"), molecule_table_path = None,
+    one_atom_table_path = None, two_atom_table_path = None):
+    molecule_table, one_atom_table, two_atom_table = mols2tables(mols)
+    
+    if prefix is not None:
+        if directory is None:
+            # os.path.join won't add slashes if you give an empty string so this is safe
+            directory = ""
+        molecule_table_path = os.path.join(directory, prefix + suffixes[0])
+        one_atom_table_path = os.path.join(directory, prefix + suffixes[1])
+        two_atom_table_path = os.path.join(directory, prefix + suffixes[2])
+
+    molecule_table.to_csv(molecule_table_path, index = False)
+    one_atom_table.to_csv(one_atom_table_path, index = False)
+    two_atom_table.to_csv(two_atom_table_path, index = False)
