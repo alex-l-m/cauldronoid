@@ -1,8 +1,12 @@
 import os.path
 from pandas import DataFrame, concat, read_csv
-from rdkit.Chem.rdmolops import SanitizeMol, RemoveHs
-from rdkit.Chem.rdchem import BondType, Atom, Mol, EditableMol
 # Optional imports, so I can run this on my computer where I don't have pytorch
+try:
+    from rdkit.Chem.rdmolops import SanitizeMol, RemoveHs
+    from rdkit.Chem.rdchem import BondType, Atom, Mol, EditableMol
+    has_rdkit = True
+except ImportError:
+    has_rdkit = False
 try:
     import torch as t
     from torch_geometric.data import Data
@@ -203,6 +207,10 @@ class Molecule:
         return [symbols2numbers[symbol] for symbol in self.get_element_symbols()]
     def get_rdkit(self, sanitize = True, removeHs = True):
         '''Return an rdkit molecule'''
+        
+        if not has_rdkit:
+            raise ImportError("RDKit not installed")
+
         mol_reconstructed_editable = EditableMol(Mol())
 
         atom_id_col = self.special_colnames["atom_id"]
