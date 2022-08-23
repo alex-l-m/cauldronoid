@@ -155,8 +155,8 @@ symbols2numbers = {\
         "Og": 118}
 
 class Molecule:
-    def __init__(self, name = None, molecule_table = None, one_atom_table = None,
-                 two_atom_table = None, special_colnames = None):
+    def __init__(self, molecule_table = None, one_atom_table = None,
+                 two_atom_table = None, name = None, special_colnames = None):
         self.special_colnames = dict((i, i) for i in default_names)
         if special_colnames is not None:
             # Add or replace special column names according to the special_colnames argument
@@ -390,7 +390,7 @@ def tables2mols(molecule_table, one_atom_table,
     molecule_dict = dict(iter(molecule_table.groupby(mol_id_colname)))
     one_atom_dict = dict(iter(one_atom_table.groupby(mol_id_colname)))
     two_atom_dict = dict(iter(two_atom_table.groupby(mol_id_colname)))
-    return [Molecule(None,
+    return [Molecule(\
         molecule_dict[mol_id],
         one_atom_dict[mol_id],
         two_atom_dict[mol_id]) \
