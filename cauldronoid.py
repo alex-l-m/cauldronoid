@@ -31,6 +31,7 @@ default_names = frozenset([\
         "start_atom",
         "end_atom",
         "formal_charge",
+        "n_hydrogen",
         "bond_type"])
 # Periodic table
 symbols2numbers = {\
@@ -299,6 +300,7 @@ def add_default_props(mol):
     for i, atom in enumerate(mol.GetAtoms()):
         atom.SetProp("atom_id", str(i))
         atom.SetProp("formal_charge", str(atom.GetFormalCharge()))
+        atom.SetProp("n_hydrogen", str(atom.GetTotalNumHs()))
     for i, bond in enumerate(mol.GetBonds()):
         bond.SetProp("bond_id", str(i))
         bond.SetProp("start_atom", str(bond.GetBeginAtomIdx()))
