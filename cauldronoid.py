@@ -200,7 +200,8 @@ class Molecule:
         return self.name
     def get_positions(self):
         return self.one_atom_table\
-                [[self.special_colnames["x"], self.special_colnames["y"], self.special_colnames["z"]]].\
+                [[self.special_colnames["x"], self.special_colnames["y"],
+                    self.special_colnames["z"]]].\
                 to_numpy()
     def get_element_symbols(self):
         return self.one_atom_table[self.special_colnames["symbol"]].to_list()
@@ -208,7 +209,7 @@ class Molecule:
         return [symbols2numbers[symbol] for symbol in self.get_element_symbols()]
     def get_rdkit(self, sanitize = True, removeHs = True):
         '''Return an rdkit molecule'''
-        
+
         if not has_rdkit:
             raise ImportError("RDKit not installed")
 
@@ -230,13 +231,12 @@ class Molecule:
             new_rdkit_atom.SetProp("_Name", atom_id)
             atom_indices[atom_id] = i
             mol_reconstructed_editable.AddAtom(new_rdkit_atom)
-        
+
         bond_id_col = self.special_colnames["bond_id"]
         start_atom_col = self.special_colnames["start_atom"]
         end_atom_col = self.special_colnames["end_atom"]
         bond_order_col = self.special_colnames["bond_type"]
         for key, row in self.get_two_atom_table().iterrows():
-            bond_id = str(row[bond_id_col])
             start_atom = str(row[start_atom_col])
             end_atom = str(row[end_atom_col])
             order_string = str(row[bond_order_col])
@@ -247,7 +247,8 @@ class Molecule:
             end_atom_index = atom_indices[end_atom]
             # I don't see a way to actually add the bond ID
             # Maybe it's not important
-            mol_reconstructed_editable.AddBond(start_atom_index, end_atom_index, order_rdkit)
+            mol_reconstructed_editable.AddBond(start_atom_index,
+                    end_atom_index, order_rdkit)
         mol_reconstructed = mol_reconstructed_editable.GetMol()
         mol_reconstructed.SetProp("_Name", self.get_name())
 
@@ -264,7 +265,8 @@ class Molecule:
         return outmol
     def get_torchgeom(self):
         '''Return a Pytorch geometric Data object'''
-        return tables2data(self.name, self.molecule_table, self.one_atom_table, self.two_atom_table)
+        return tables2data(self.name, self.molecule_table, self.one_atom_table,
+                self.two_atom_table)
     def get_ase(self):
         '''Returns an Atomic Simulation Environment Atoms object'''
         if not has_ase:
@@ -275,7 +277,8 @@ class Molecule:
         pass
 
 def add_positions(rdkit_mol, conf_id = 0):
-    for pos_vec, atom in zip(list(rdkit_mol.GetConformer(conf_id).GetPositions()), rdkit_mol.GetAtoms()):
+    for pos_vec, atom in \
+            zip(list(rdkit_mol.GetConformer(conf_id).GetPositions()), rdkit_mol.GetAtoms()):
         atom.SetDoubleProp("x", pos_vec[0])
         atom.SetDoubleProp("y", pos_vec[1])
         atom.SetDoubleProp("z", pos_vec[2])
@@ -293,7 +296,8 @@ def rdkit2cauldronoid(rdkit_mol):
         name = rdkit_mol.GetProp("_Name")
     else:
         name = None
-    cauldronoid_mol = Molecule(name = name, molecule_table = molecule_table(rdkit_mol), one_atom_table = atom_table(rdkit_mol), two_atom_table = bond_table(rdkit_mol)) 
+    cauldronoid_mol = Molecule(molecule_table(rdkit_mol),
+            atom_table(rdkit_mol), bond_table(rdkit_mol), name)
     return cauldronoid_mol
 
 def add_default_props(mol):
@@ -316,14 +320,14 @@ def bind_rows_map(table_fun, name_fun, id_colname, xs):
     name_fun: Function mapping objects to names (iterable of strings)
     id_colname: Name of new column to add containing the name of the object that the row comes from (string)
     xs: Objects to generate tables from
-    
+
     Returns a Pandas dataframe'''
     names = map(name_fun, xs)
     tables = map(table_fun, xs)
     return concat(tables, axis = 0, keys = names).\
     		reset_index(level = 0).\
     		rename(columns = {"level_0": id_colname})
-	
+
 def molecule_table(rdkit_mol):
     return DataFrame([rdkit_mol.GetPropsAsDict(\
 			includePrivate = False, includeComputed = False)])
@@ -427,7 +431,7 @@ def mols2files(mols, prefix, directory = None, suffixes = ("_mol_tbl.csv.gz",
     "_one_tbl.csv.gz", "_two_tbl.csv.gz"), molecule_table_path = None,
     one_atom_table_path = None, two_atom_table_path = None):
     molecule_table, one_atom_table, two_atom_table = mols2tables(mols)
-    
+
     if directory is None:
         # os.path.join won't add slashes if you give an empty string so this is safe
         directory = ""
