@@ -240,7 +240,6 @@ class Molecule:
             start_atom = str(row[start_atom_col])
             end_atom = str(row[end_atom_col])
             order_string = str(row[bond_order_col])
-            assert order_string != "UNSPECIFIED"
             order_rdkit = BondType.names[order_string]
             # Relies on the atoms containing their index in the name
             start_atom_index = atom_indices[start_atom]
