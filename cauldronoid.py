@@ -227,6 +227,15 @@ class Molecule:
             atom_id = str(row[atom_id_col])
             formal_charge = int(row[formal_charge_col])
             new_rdkit_atom = Atom(element)
+            # If removeHs is off, be completely literal: hydrogens present if
+            # and only if specified. Motivated by the chelating oxygens in
+            # CSD's acac ligands, which RDKit incorrectly adds oxygens to.
+            # Possibly this should be a separate option but for now, this seems
+            # like a good compromise between preventing errors, and enabling
+            # working with molecules in the organic chemist's H-free data
+            # structure
+            if not removeHs:
+                new_rdkit_atom.SetNoImplicit(True)
             new_rdkit_atom.SetFormalCharge(formal_charge)
             new_rdkit_atom.SetProp("_Name", atom_id)
             atom_indices[atom_id] = i
