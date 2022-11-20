@@ -258,7 +258,16 @@ class Molecule:
             mol_reconstructed_editable.AddBond(start_atom_index,
                     end_atom_index, order_rdkit)
         mol_reconstructed = mol_reconstructed_editable.GetMol()
+
+        # Add all molecule properties
         mol_reconstructed.SetProp("_Name", self.get_name())
+        # Looping over rows of the molecule table, but there should only be one
+        # row
+        for row in self.get_molecule_table().itertuples(index = False):
+            for key, value in row._asdict().items():
+                # Only allowing string properties for now, not sure how to handle types
+                mol_reconstructed.SetProp(key, str(value))
+
 
         # Maybe sanitize
         if sanitize:
