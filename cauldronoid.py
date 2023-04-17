@@ -220,7 +220,10 @@ class Molecule:
         formal_charge_col = self.special_colnames["formal_charge"]
         # Indices of atoms will be needed to add bonds
         atom_indices = dict()
-        for i, (key, row) in enumerate(self.get_one_atom_table().iterrows()):
+        # Using itertuples instead of iterrows so the types are consistent in each row
+        for i, rowtuple in enumerate(self.get_one_atom_table().itertuples()):
+            # Converting to a dictionary so I can access values by with square brackets
+            row = rowtuple._asdict()
             # Need type conversion because I don't know how to control pandas
             # types and it may infer a floating point type for the column
             element = str(row[symbol_col])
@@ -245,7 +248,10 @@ class Molecule:
         start_atom_col = self.special_colnames["start_atom"]
         end_atom_col = self.special_colnames["end_atom"]
         bond_order_col = self.special_colnames["bond_type"]
-        for key, row in self.get_two_atom_table().iterrows():
+        # Using itertuples instead of iterrows so the types are consistent in each row
+        for rowtuple in self.get_two_atom_table().itertuples():
+            # Converting to a dictionary so I can access values by with square brackets
+            row = rowtuple._asdict()
             start_atom = str(row[start_atom_col])
             end_atom = str(row[end_atom_col])
             order_string = str(row[bond_order_col])
