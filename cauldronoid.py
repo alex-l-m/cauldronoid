@@ -3,7 +3,8 @@ from pandas import DataFrame, concat, read_csv
 # Optional imports, so I can run this on my computer where I don't have pytorch
 try:
     from rdkit.Chem.rdmolops import SanitizeMol, RemoveHs
-    from rdkit.Chem.rdchem import BondType, Atom, Mol, EditableMol
+    from rdkit.Chem.rdchem import BondType, Atom, Mol, EditableMol, Conformer
+    from rdkit.Geometry.rdGeometry import Point3D
     has_rdkit = True
 except ImportError:
     has_rdkit = False
@@ -264,6 +265,30 @@ class Molecule:
             mol_reconstructed_editable.AddBond(start_atom_index,
                     end_atom_index, order_rdkit)
         mol_reconstructed = mol_reconstructed_editable.GetMol()
+
+        # Check column names of one atom table for x, y and z to decide whether
+        # to add a conformation
+        x_col = self.special_colnames["x"]
+        y_col = self.special_colnames["y"]
+        z_col = self.special_colnames["z"]
+        if x_col in self.get_one_atom_table().columns and \
+                y_col in self.get_one_atom_table().columns and \
+                z_col in self.get_one_atom_table().columns:
+            # Create the conformer
+            n_atoms = mol_reconstructed.GetNumAtoms()
+            conf = Conformer(n_atoms)
+            conf.Set3D(True)
+            conf.SetId(0)
+
+            # Second loop over atom table to add positions to the conformer
+            for i, rowtuple in enumerate(self.get_one_atom_table().itertuples()):
+                # Converting to a dictionary so I can access values by with square brackets
+                row = rowtuple._asdict()
+                conf.SetAtomPosition(i,
+                        Point3D(row[x_col], row[y_col], row[z_col]))
+
+            # Add the conformer
+            mol_reconstructed.AddConformer(conf)
 
         for rowtuple in self.get_two_atom_table().itertuples():
             # Converting to a dictionary so I can access values by with square brackets
