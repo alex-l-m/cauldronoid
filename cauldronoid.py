@@ -265,6 +265,18 @@ class Molecule:
                     end_atom_index, order_rdkit)
         mol_reconstructed = mol_reconstructed_editable.GetMol()
 
+        for rowtuple in self.get_two_atom_table().itertuples():
+            # Converting to a dictionary so I can access values by with square brackets
+            row = rowtuple._asdict()
+            start_atom = str(row[start_atom_col])
+            end_atom = str(row[end_atom_col])
+            # Relies on the atoms containing their index in the name
+            start_atom_index = atom_indices[start_atom]
+            end_atom_index = atom_indices[end_atom]
+            bond = mol_reconstructed.GetBondBetweenAtoms(start_atom_index, end_atom_index)
+            if bond is None:
+                bond = mol_reconstructed.GetBondBetweenAtoms(end_atom_index, start_atom_index)
+
         # Add all molecule properties
         mol_reconstructed.SetProp("_Name", self.get_name())
         # Looping over rows of the molecule table, but there should only be one
