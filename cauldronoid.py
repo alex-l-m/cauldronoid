@@ -535,6 +535,10 @@ def set_rdkit_prop(obj, dtype, name, value):
         obj.SetDoubleProp(name, value)
     elif dtype.kind == "S" or dtype.kind == "U":
         obj.SetProp(name, value)
+    elif dtype.kind == "O":
+        # Column of type object not guaranteed to be strings, but can be converted
+        # Would prefer if this column type were not used, but don't know how to prevent it
+        obj.SetProp(name, str(value))
     else:
         raise ValueError(f"dtype.kind {dtype.kind} not recognized")
 
