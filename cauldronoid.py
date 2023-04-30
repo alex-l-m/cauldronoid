@@ -177,13 +177,13 @@ class Molecule:
             self.molecule_table = None
         # Get the name from the name argument, or, if not available, from the molecule table
         if name is not None:
-            self.name = name
+            self.name = str(name)
         elif molecule_table is not None and \
                 self.special_colnames["mol_id"] in molecule_table.columns:
             # mol_id column: pandas Series object
             mol_id_col = molecule_table[self.special_colnames["mol_id"]]
             # Retrieve the first value
-            self.name = mol_id_col.item()
+            self.name = str(mol_id_col.item())
         else:
             self.name = None
         self.one_atom_table = one_atom_table
