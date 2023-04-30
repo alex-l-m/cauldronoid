@@ -221,6 +221,9 @@ class Molecule:
         formal_charge_col = self.special_colnames["formal_charge"]
         # Indices of atoms will be needed to add bonds
         atom_indices = dict()
+        # Types of atom table columns, excluding special columns like positions
+        one_tbl_column_types = non_special_column_types(self.get_one_atom_table(),
+                                                        self.special_colnames.keys())
         # Using itertuples instead of iterrows so the types are consistent in each row
         for i, rowtuple in enumerate(self.get_one_atom_table().itertuples()):
             # Converting to a dictionary so I can access values by with square brackets
@@ -242,6 +245,10 @@ class Molecule:
                 new_rdkit_atom.SetNoImplicit(True)
             new_rdkit_atom.SetFormalCharge(formal_charge)
             new_rdkit_atom.SetProp("_Name", atom_id)
+            # Set non-special atom properties
+            for colname, dtype in one_tbl_column_types.items():
+                set_rdkit_prop(new_rdkit_atom, dtype, colname, row[colname])
+
             atom_indices[atom_id] = i
             mol_reconstructed_editable.AddAtom(new_rdkit_atom)
 
@@ -305,9 +312,9 @@ class Molecule:
         # Add all molecule properties
         mol_reconstructed.SetProp("_Name", self.get_name())
         # Retrieve the type of each column of the table
-        mol_tbl_column_types = dict((colname, dtype) \
-                for colname, dtype in self.get_molecule_table().dtypes.to_dict().items() \
-                if colname not in self.special_colnames.keys())
+        mol_tbl_column_types = non_special_column_types(self.get_molecule_table(),
+                                                        self.special_colnames.keys())
+
         # Looping over rows of the molecule table, but there should only be one
         # row
         for rowtuple in self.get_molecule_table().itertuples(index = False):
@@ -530,3 +537,9 @@ def set_rdkit_prop(obj, dtype, name, value):
         obj.SetProp(name, value)
     else:
         raise ValueError(f"dtype.kind {dtype.kind} not recognized")
+
+def non_special_column_types(tbl, excluded_colnames):
+    return dict((colname, dtype) \
+                for colname, dtype in tbl.dtypes.to_dict().items() \
+                if colname not in excluded_colnames)
+
