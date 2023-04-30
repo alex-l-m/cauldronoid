@@ -304,13 +304,16 @@ class Molecule:
 
         # Add all molecule properties
         mol_reconstructed.SetProp("_Name", self.get_name())
+        # Retrieve the type of each column of the table
+        mol_tbl_column_types = dict((colname, dtype) \
+                for colname, dtype in self.get_molecule_table().dtypes.to_dict().items() \
+                if colname not in self.special_colnames.keys())
         # Looping over rows of the molecule table, but there should only be one
         # row
-        for row in self.get_molecule_table().itertuples(index = False):
-            for key, value in row._asdict().items():
-                # Only allowing string properties for now, not sure how to handle types
-                mol_reconstructed.SetProp(key, str(value))
-
+        for rowtuple in self.get_molecule_table().itertuples(index = False):
+            row = rowtuple._asdict()
+            for colname, dtype in mol_tbl_column_types.items():
+                set_rdkit_prop(mol_reconstructed, dtype, colname, row[colname])
 
         # Maybe sanitize
         if sanitize:
@@ -502,3 +505,28 @@ def mols2files(mols, prefix, directory = None, suffixes = ("_mol_tbl.csv.gz",
     molecule_table.to_csv(molecule_table_path, index = False)
     one_atom_table.to_csv(one_atom_table_path, index = False)
     two_atom_table.to_csv(two_atom_table_path, index = False)
+
+def set_rdkit_prop(obj, dtype, name, value):
+    '''Set the value of a property of an RDKit molecule, atom or bond
+
+    obj: The molecule, atom or bond (anything with SetProp etc methods)
+
+    dtype: A numpy datatype
+
+    name: The name of the property
+
+    value: The value to set the property to
+
+    Modifies in place, no return value'''
+    if dtype.kind == "b":
+        obj.SetBoolProp(name, value)
+    elif dtype.kind == "i":
+        obj.SetIntProp(name, value)
+    elif dtype.kind == "u":
+        obj.SetUnsignedProp(name, value)
+    elif dtype.kind == "f":
+        obj.SetDoubleProp(name, value)
+    elif dtype.kind == "S" or dtype.kind == "U":
+        obj.SetProp(name, value)
+    else:
+        raise ValueError(f"dtype.kind {dtype.kind} not recognized")
