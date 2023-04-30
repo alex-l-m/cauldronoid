@@ -267,8 +267,6 @@ class Molecule:
             # Relies on the atoms containing their index in the name
             start_atom_index = atom_indices[start_atom]
             end_atom_index = atom_indices[end_atom]
-            # I don't see a way to actually add the bond ID
-            # Maybe it's not important
             mol_reconstructed_editable.AddBond(start_atom_index,
                     end_atom_index, order_rdkit)
         mol_reconstructed = mol_reconstructed_editable.GetMol()
@@ -297,9 +295,13 @@ class Molecule:
             # Add the conformer
             mol_reconstructed.AddConformer(conf)
 
+        # Types of bond table columns, excluding special columns like positions
+        two_tbl_column_types = non_special_column_types(self.get_two_atom_table(),
+                                                        self.special_colnames.keys())
         for rowtuple in self.get_two_atom_table().itertuples():
             # Converting to a dictionary so I can access values by with square brackets
             row = rowtuple._asdict()
+            bond_id = str(row[bond_id_col])
             start_atom = str(row[start_atom_col])
             end_atom = str(row[end_atom_col])
             # Relies on the atoms containing their index in the name
@@ -308,6 +310,11 @@ class Molecule:
             bond = mol_reconstructed.GetBondBetweenAtoms(start_atom_index, end_atom_index)
             if bond is None:
                 bond = mol_reconstructed.GetBondBetweenAtoms(end_atom_index, start_atom_index)
+            # Set non-special bond properties
+            for colname, dtype in two_tbl_column_types.items():
+                set_rdkit_prop(bond, dtype, colname, row[colname])
+
+            bond.SetProp("_Name", bond_id)
 
         # Add all molecule properties
         mol_reconstructed.SetProp("_Name", self.get_name())
