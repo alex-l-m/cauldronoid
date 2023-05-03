@@ -214,8 +214,10 @@ class Molecule:
         if not has_rdkit:
             raise ImportError("RDKit not installed")
 
+        # Create the molecule
         mol_reconstructed_editable = EditableMol(Mol())
 
+        # Add atoms to the molecule (not the conformer; no positions)
         atom_id_col = self.special_colnames["atom_id"]
         symbol_col = self.special_colnames["symbol"]
         formal_charge_col = self.special_colnames["formal_charge"]
@@ -252,6 +254,7 @@ class Molecule:
             atom_indices[atom_id] = i
             mol_reconstructed_editable.AddAtom(new_rdkit_atom)
 
+        # Add bonds
         bond_id_col = self.special_colnames["bond_id"]
         start_atom_col = self.special_colnames["start_atom"]
         end_atom_col = self.special_colnames["end_atom"]
@@ -271,8 +274,7 @@ class Molecule:
                     end_atom_index, order_rdkit)
         mol_reconstructed = mol_reconstructed_editable.GetMol()
 
-        # Check column names of one atom table for x, y and z to decide whether
-        # to add a conformation
+        # Check if atom positions are present, to decide whether to create a conformer
         x_col = self.special_colnames["x"]
         y_col = self.special_colnames["y"]
         z_col = self.special_colnames["z"]
@@ -295,6 +297,7 @@ class Molecule:
             # Add the conformer
             mol_reconstructed.AddConformer(conf)
 
+        # Add bond properties
         # Types of bond table columns, excluding special columns like positions
         two_tbl_column_types = non_special_column_types(self.get_two_atom_table(),
                                                         self.special_colnames.keys())
